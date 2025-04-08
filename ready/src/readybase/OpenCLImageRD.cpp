@@ -255,9 +255,9 @@ void OpenCLImageRD::GetIntegrals()
     {
         for(int ix = 0; ix < X; ix++)
         {
-            for(int iy = 0; iy < X; iy++)
+            for(int iy = 0; iy < Y; iy++)
             {
-                for(int iz = 0; iz < X; iz++) {
+                for(int iz = 0; iz < Z; iz++) {
                     float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
                     this->integrals[ic] += val; 
                 }
