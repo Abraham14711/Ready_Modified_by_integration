@@ -160,12 +160,46 @@ void OpenCLImageRD::CreateOpenCLBuffers()
             throwOnError(ret,"OpenCLImageRD::CreateOpenCLBuffers : buffer creation failed: ");
         }
     }
+    
+    this->intergral_buffers[0].resize(NC);
+    for(int ic=0;ic<NC;ic++)
+    {
+        this->intergral_buffers[0][ic] = clCreateBuffer(this->context, CL_MEM_READ_WRITE, MEM_SIZE, NULL, &ret);
+        throwOnError(ret,"OpenCLImageRD::CreateOpenCLBuffers : buffer creation failed: ");
+    }
 
     this->need_write_to_opencl_buffers = true;
 }
 
 // ----------------------------------------------------------------------------------------------------------------
 
+//govno
+void OpenCLImageRD::GetIntegrals()
+{
+    const int NC = this->GetNumberOfChemicals();
+    this->integrals.clear();
+    this->integrals.resize(NC, 0);
+
+    const int X = this->GetX();
+    const int Y = this->GetY();
+    const int Z = this->GetZ();
+
+    for (int ic=0; ic < NC; ic++)
+    {
+        for(int ix = 0; ix < X; ix++)
+        {
+            for(int iy = 0; iy < Y; iy++)
+            {
+                for(int iz = 0; iz < Z; iz++) {
+                    float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
+                    this->integrals[ic] += val; 
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------------------------------------------
 void OpenCLImageRD::WriteToOpenCLBuffersIfNeeded()
 {
     if(!this->need_write_to_opencl_buffers) return;
@@ -178,6 +212,8 @@ void OpenCLImageRD::WriteToOpenCLBuffersIfNeeded()
         void* data = this->images[ic]->GetScalarPointer();
         cl_int ret = clEnqueueWriteBuffer(this->command_queue,this->buffers[this->iCurrentBuffer][ic], CL_TRUE, 0, MEM_SIZE, data, 0, NULL, NULL);
         throwOnError(ret,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
+
+        
     }
 
     this->need_write_to_opencl_buffers = false;
@@ -240,31 +276,6 @@ void OpenCLImageRD::SetNumberOfChemicals(int n, bool reallocate_storage)
 
 // ----------------------------------------------------------------------------------------------------------------
 
-//govno
-void OpenCLImageRD::GetIntegrals()
-{
-    const int NC = this->GetNumberOfChemicals();
-    this->integrals.clear();
-    this->integrals.resize(NC, 0);
-
-    const int X = this->GetX();
-    const int Y = this->GetY();
-    const int Z = this->GetZ();
-
-    for (int ic=0; ic < NC; ic++)
-    {
-        for(int ix = 0; ix < X; ix++)
-        {
-            for(int iy = 0; iy < Y; iy++)
-            {
-                for(int iz = 0; iz < Z; iz++) {
-                    float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
-                    this->integrals[ic] += val; 
-                }
-            }
-        }
-    }
-}
 
 
 // --------------------------------------------------------------------------------------------
@@ -287,7 +298,9 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
 
         for(int ic=0; ic < NC;ic++)
         {
-            ret = clSetKernelArg(this->kernel, ic, sizeof(float), &this->integrals[ic]);
+            ret = clSetKernelArg(this->kernel, ic, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
+            throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
+
         }
 
         for(int io=0;io<2;io++) // first input buffers (io=0) then output buffers (io=1)
