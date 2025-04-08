@@ -218,11 +218,18 @@ void WriteHeader(ostringstream& kernel_source, const InputsNeeded& inputs_needed
     kernel_source << "kernel void rd_compute(";
 
     // govno-code
+    // for (const string& chem : inputs_needed.chemicals_needed)
+    // {
+    //     kernel_source << "global " << options.data_type_string << "integral_" << chem;
+    //     kernel_source << ",";
+    // }
+    
     for (const string& chem : inputs_needed.chemicals_needed)
     {
-        kernel_source << "global " << options.data_type_string << "integral_" << chem;
+        kernel_source << "global " << options.data_type_string << " *integral_" << chem;
         kernel_source << ",";
     }
+
 
     for (const string& chem : inputs_needed.chemicals_needed)
     {

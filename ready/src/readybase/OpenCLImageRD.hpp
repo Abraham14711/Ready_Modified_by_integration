@@ -53,7 +53,7 @@ class OpenCLImageRD : public ImageRD, public OpenCL_MixIn
         void AllocateImages(int x,int y,int z,int nc,int data_type) override;
         void SetNumberOfChemicals(int n, bool reallocate_storage = false) override;
 
-        void GetIntegrals();
+        // void GetIntegrals();
 
         void InternalUpdate(int n_steps) override;
 
@@ -62,6 +62,8 @@ class OpenCLImageRD : public ImageRD, public OpenCL_MixIn
         void CreateOpenCLBuffers() override;
         void WriteToOpenCLBuffersIfNeeded() override;
         void ReadFromOpenCLBuffers() override;
+
+        vtkSmartPointer<float> OpenCLImageRD::SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images);
 
     private:
 

@@ -29,6 +29,8 @@ using namespace OpenCL_utils;
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <vtkSmartPointer.h>
+
 
 // VTK:
 #include <vtkImageData.h>
@@ -173,30 +175,72 @@ void OpenCLImageRD::CreateOpenCLBuffers()
 
 // ----------------------------------------------------------------------------------------------------------------
 
-//govno
-void OpenCLImageRD::GetIntegrals()
-{
-    const int NC = this->GetNumberOfChemicals();
-    this->integrals.clear();
-    this->integrals.resize(NC, 0);
+// void OpenCLImageRD::GetIntegrals()
+// {
+//     const int NC = this->GetNumberOfChemicals();
+//     this->integrals.clear();
+//     this->integrals.resize(NC, 0);
 
-    const int X = this->GetX();
-    const int Y = this->GetY();
-    const int Z = this->GetZ();
+//     const int X = this->GetX();
+//     const int Y = this->GetY();
+//     const int Z = this->GetZ();
 
-    for (int ic=0; ic < NC; ic++)
-    {
-        for(int ix = 0; ix < X; ix++)
-        {
-            for(int iy = 0; iy < Y; iy++)
-            {
-                for(int iz = 0; iz < Z; iz++) {
-                    float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
-                    this->integrals[ic] += val; 
+//     for (int ic=0; ic < NC; ic++)
+//     {
+//         for(int ix = 0; ix < X; ix++)
+//         {
+//             for(int iy = 0; iy < Y; iy++)
+//             {
+//                 for(int iz = 0; iz < Z; iz++) {
+//                     float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
+//                     this->integrals[ic] += val; 
+//                 }
+//             }
+//         }
+//     }
+// }
+
+// ----------------------------------------------------------------------------------------------------------------
+
+vtkSmartPointer<double> OpenCLImageRD::SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images) {
+    double totalSum = 0.0;
+
+    for (const auto& image : images) {
+        if (!image) continue; // Пропускаем nullptr
+
+        void* data = image->GetScalarPointer();
+        if (!data) continue; // Проверяем, что данные существуют
+
+        int* dims = image->GetDimensions();
+        int numComponents = image->GetNumberOfScalarComponents();
+        vtkIdType totalPixels = dims[0] * dims[1] * dims[2];
+
+        // Обработка в зависимости от типа данных
+        switch (image->GetScalarType()) {
+            case VTK_FLOAT: {
+                float* ptr = static_cast<float*>(data);
+                for (vtkIdType i = 0; i < totalPixels * numComponents; ++i) {
+                    totalSum += ptr[i];
                 }
+                break;
             }
+            case VTK_DOUBLE: {
+                double* ptr = static_cast<double*>(data);
+                for (vtkIdType i = 0; i < totalPixels * numComponents; ++i) {
+                    totalSum += ptr[i];
+                }
+                break;
+            }
+            default:
+                std::cerr << "Unsupported data type!" << std::endl;
+                break;
         }
     }
+
+    // Создаем vtkSmartPointer<double> и копируем в него сумму
+    vtkSmartPointer<double> sumPtr = vtkSmartPointer<double>::New();
+    *sumPtr = totalSum; // Разыменовываем и записываем значение
+    return sumPtr;
 }
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -213,7 +257,10 @@ void OpenCLImageRD::WriteToOpenCLBuffersIfNeeded()
         cl_int ret = clEnqueueWriteBuffer(this->command_queue,this->buffers[this->iCurrentBuffer][ic], CL_TRUE, 0, MEM_SIZE, data, 0, NULL, NULL);
         throwOnError(ret,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
 
-        
+        void* data_integrals = this->SumImageScalars(this->images);
+        cl_int ret = clEnqueueWriteBuffer(this->command_queue,this->intergral_buffers[0][ic], CL_TRUE, 0, MEM_SIZE, data_integrals, 0, NULL, NULL);
+        throwOnError(ret,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
+
     }
 
     this->need_write_to_opencl_buffers = false;
@@ -294,14 +341,20 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
     for(int it=0;it<n_steps;it++)
     {
         // govno
-        this->GetIntegrals();
+        // this->GetIntegrals();
 
-        for(int ic=0; ic < NC;ic++)
-        {
-            ret = clSetKernelArg(this->kernel, ic, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
+        // for(int ic=0; ic < NC;ic++)
+        // {
+        //     ret = clSetKernelArg(this->kernel, ic, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
+        //     throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
+
+        // }
+
+        for(int ic=0;ic<NC;ic++){
+            ret = clSetKernelArg(this->kernel, NC, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
             throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
-
         }
+
 
         for(int io=0;io<2;io++) // first input buffers (io=0) then output buffers (io=1)
         {
