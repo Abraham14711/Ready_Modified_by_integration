@@ -185,62 +185,86 @@ void OpenCLImageRD::CreateOpenCLBuffers()
 //     const int Y = this->GetY();
 //     const int Z = this->GetZ();
 
-//     for (int ic=0; ic < NC; ic++)
-//     {
-//         for(int ix = 0; ix < X; ix++)
-//         {
-//             for(int iy = 0; iy < Y; iy++)
-//             {
-//                 for(int iz = 0; iz < Z; iz++) {
-//                     float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
-//                     this->integrals[ic] += val; 
-//                 }
-//             }
-//         }
-//     }
+    // for (int ic=0; ic < NC; ic++)
+    // {
+    //     for(int ix = 0; ix < X; ix++)
+    //     {
+    //         for(int iy = 0; iy < Y; iy++)
+    //         {
+    //             for(int iz = 0; iz < Z; iz++) {
+    //                 float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
+    //                 this->integrals[ic] += val; 
+    //             }
+    //         }
+    //     }
+    // }
 // }
 
 // ----------------------------------------------------------------------------------------------------------------
 
-vtkSmartPointer<double> OpenCLImageRD::SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images) {
+std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images) {
     double totalSum = 0.0;
-
-    for (const auto& image : images) {
-        if (!image) continue; // Пропускаем nullptr
-
-        void* data = image->GetScalarPointer();
-        if (!data) continue; // Проверяем, что данные существуют
-
-        int* dims = image->GetDimensions();
-        int numComponents = image->GetNumberOfScalarComponents();
-        vtkIdType totalPixels = dims[0] * dims[1] * dims[2];
-
-        // Обработка в зависимости от типа данных
-        switch (image->GetScalarType()) {
-            case VTK_FLOAT: {
-                float* ptr = static_cast<float*>(data);
-                for (vtkIdType i = 0; i < totalPixels * numComponents; ++i) {
-                    totalSum += ptr[i];
-                }
-                break;
-            }
-            case VTK_DOUBLE: {
-                double* ptr = static_cast<double*>(data);
-                for (vtkIdType i = 0; i < totalPixels * numComponents; ++i) {
-                    totalSum += ptr[i];
-                }
-                break;
-            }
-            default:
-                std::cerr << "Unsupported data type!" << std::endl;
-                break;
-        }
+    int X = this->GetX();
+    int Y = this->GetY();
+    int Z = this->GetZ();
+    const int NC = this->GetNumberOfChemicals();
+    
+    std::vector<vtkSmartPointer<vtkImageData>> copied_images(NC, nullptr);
+    for (int ic=0; ic < NC; ic++) {
+        copied_images[ic] = vtkSmartPointer<vtkImageData>::New();
+    }
+    for(int ic=0; ic < NC; ic++) {
+        copied_images[ic]->DeepCopy(images[ic]);
     }
 
+    
+    for (int ic=0; ic < NC; ic++) {
+        float iSum = 0.0;
+        for(int ix = 0; ix < X; ix++)
+        {
+            for(int iy = 0; iy < Y; iy++)
+            {
+                for(int iz = 0; iz < Z; iz++) {
+                    float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
+                    iSum += val; 
+                }
+            }
+        }
+        copied_images[ic]->SetScalarComponentFromFloat(X,Y,Z,1,iSum);
+    }
+    return copied_images;
+    // for (const auto& image : images) {
+    //     if (!image) continue; // Пропускаем nullptr
+
+    //     if (!data) continue; // Проверяем, что данные существуют
+
+    //     // int* dims = image->GetDimensions();
+    //     // int numComponents = image->GetNumberOfScalarComponents();
+    //     // vtkIdType totalPixels = dims[0] * dims[1] * dims[2];
+
+    //     // Обработка в зависимости от типа данных
+    //     switch (image->GetScalarType()) {
+    //         case VTK_FLOAT: {
+    //             float* ptr = static_cast<float*>(data);
+    //             for (vtkIdType i = 0; i < totalPixels * numComponents; ++i) {
+    //                 totalSum += ptr[i];
+    //             }
+    //             break;
+    //         }
+    //         case VTK_DOUBLE: {
+    //             double* ptr = static_cast<double*>(data);
+    //             for (vtkIdType i = 0; i < totalPixels * numComponents; ++i) {
+    //                 totalSum += ptr[i];
+    //             }
+    //             break;
+    //         }
+    //         default:
+    //             std::cerr << "Unsupported data type!" << std::endl;
+    //             break;
+    //     }
+    // }
+
     // Создаем vtkSmartPointer<double> и копируем в него сумму
-    vtkSmartPointer<double> sumPtr = vtkSmartPointer<double>::New();
-    *sumPtr = totalSum; // Разыменовываем и записываем значение
-    return sumPtr;
 }
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -250,6 +274,8 @@ void OpenCLImageRD::WriteToOpenCLBuffersIfNeeded()
 
     const size_t MEM_SIZE = this->data_type_size * this->GetX() * this->GetY() * this->GetZ();
 
+    std::vector<vtkSmartPointer<vtkImageData>> data_integrals = this->SumImageScalars(this->images);
+
     this->iCurrentBuffer = 0;
     for(int ic=0;ic<this->GetNumberOfChemicals();ic++)
     {
@@ -257,9 +283,9 @@ void OpenCLImageRD::WriteToOpenCLBuffersIfNeeded()
         cl_int ret = clEnqueueWriteBuffer(this->command_queue,this->buffers[this->iCurrentBuffer][ic], CL_TRUE, 0, MEM_SIZE, data, 0, NULL, NULL);
         throwOnError(ret,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
 
-        void* data_integrals = this->SumImageScalars(this->images);
-        cl_int ret = clEnqueueWriteBuffer(this->command_queue,this->intergral_buffers[0][ic], CL_TRUE, 0, MEM_SIZE, data_integrals, 0, NULL, NULL);
-        throwOnError(ret,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
+        void * temp = data_integrals[ic]->GetScalarPointer();
+        cl_int ret1 = clEnqueueWriteBuffer(this->command_queue,this->intergral_buffers[0][ic], CL_TRUE, 0, MEM_SIZE, data, 0, NULL, NULL);
+        throwOnError(ret1,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
 
     }
 

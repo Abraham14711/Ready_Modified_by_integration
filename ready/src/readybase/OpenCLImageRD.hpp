@@ -63,7 +63,7 @@ class OpenCLImageRD : public ImageRD, public OpenCL_MixIn
         void WriteToOpenCLBuffersIfNeeded() override;
         void ReadFromOpenCLBuffers() override;
 
-        vtkSmartPointer<float> OpenCLImageRD::SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images);
+        std::vector<vtkSmartPointer<vtkImageData>> SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images);
 
     private:
 

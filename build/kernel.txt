@@ -96,9 +96,9 @@ kernel void rd_compute(global float *a_in,global float *b_in,global float *c_in,
     float delta_e = 0.0f;
 
     // the formula:
-    delta_a = max(0,min(aa*a+ba*b+ca,Fmax))
+    delta_a = (aa/integral_a)*a+ba*b+ca
         - da*a + diff_a*laplacian_a + d*nsu;
-    delta_b = max(0,min(ab*a+bb*b+cb,Gmax))
+    delta_b = ab*a+bb*b+cb
         - db*b + diff_b*laplacian_b + d*nsv;
     c = a+b;
 
