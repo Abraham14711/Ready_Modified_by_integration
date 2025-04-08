@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<VTKFile type="ImageData" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <RD format_version="6">
+    <description>
+    Kobayashi, R. (1993) &quot;Modeling and numerical simulations of dendritic crystal growth&quot; Physica D: Nonlinear Phenomena, 63(3-4), 410-423.
+
+    Following &lt;a href=&quot;https://softologyblog.wordpress.com/2020/03/29/dendritic-crystal-growth/&quot;&gt;https://softologyblog.wordpress.com/2020/03/29/dendritic-crystal-growth/&lt;/a&gt; - thanks!
+
+    Thanks also to Rahul Sanal for the paper linked inside.
+
+    In our implementation, a = phi, b = temperature (t).
+
+    Change the value of 'anisotropy' to get snowflakes with different numbers of arms - the default is 7.
+
+    Change 'k' between 0.8 and 2.0 to get more featheriness.
+    </description>
+    <rule name="Dendrites" type="formula">
+      <param name="timestep">    0.0002   </param>
+      <param name="dx">          0.03     </param>
+      <param name="dy">          0.03     </param>
+      <param name="tau">         0.0003   </param>
+      <param name="epsbar">      0.01     </param>
+      <param name="k">           1.8      </param>  <!-- how feathery should the snowflakes be? -->
+      <param name="delta">       0.01     </param>
+      <param name="anisotropy">  7.0      </param>  <!-- how many arms should the snowflakes have? -->
+      <param name="rotate">      0.1      </param>  <!-- rotate the anisotropy -->
+      <param name="alpha">       0.9      </param>
+      <param name="gamma">      10.0      </param>
+      <param name="teq">         1.0      </param>
+      <formula number_of_chemicals="2">
+float4 grad_phi_x[5]; // C,N,E,S,W
+grad_phi_x[0] = (a_e - a_w) / dx;
+grad_phi_x[1] = (a_ne - a_nw) / dx;
+grad_phi_x[2] = (a_e2 - a) / dx;
+grad_phi_x[3] = (a_se - a_sw) / dx;
+grad_phi_x[4] = (a - a_w2) / dx;
+float4 grad_phi_y[5];
+grad_phi_y[0] = (a_s - a_n) / dy;
+grad_phi_y[1] = (a - a_n2) / dy;
+grad_phi_y[2] = (a_se - a_ne) / dy;
+grad_phi_y[3] = (a_s2 - a) / dy;
+grad_phi_y[4] = (a_sw - a_nw) / dy;
+
+float4 eps[5], eps_deriv[5];
+for(int i = 0; i &lt; 5; i++) {
+  float4 angle = atan2(grad_phi_y[i],
+    grad_phi_x[i]) + rotate;
+  eps[i] = epsbar * (1.0f
+    + delta * cos(anisotropy * angle));
+  eps_deriv[i] = -epsbar * anisotropy
+    * delta * sin(anisotropy * angle);
+}
+float4 grad_eps2_x = (eps[2] * eps[2]
+  - eps[4] * eps[4]) / dx; // E - W
+float4 grad_eps2_y = (eps[3] * eps[3]
+  - eps[1] * eps[1]) / dy; // S - N
+
+float4 pi = 3.14159265358979323846f;
+float4 m = alpha
+  * atan(gamma * (teq - b)) / pi;
+
+float4 edgp_x = (eps[4] * eps_deriv[4]
+     * grad_phi_y[4] - eps[2]
+     * eps_deriv[2] * grad_phi_y[2]
+    ) / dx;
+float4 edgp_y = (eps[3] * eps_deriv[3]
+     * grad_phi_x[3] - eps[1]
+     * eps_deriv[1] * grad_phi_x[1]
+    ) / dy;
+
+delta_a = (
+  eps[0] * eps[0] * laplacian_a
+  + edgp_x + edgp_y
+  + grad_eps2_x * grad_phi_x[0]
+  + grad_eps2_y * grad_phi_y[0]
+  + a * (1.0f - a) * (a - 0.5f + m)
+  ) / tau;
+delta_b = laplacian_b + k * delta_a;
+      </formula>
+    </rule>
+    <initial_pattern_generator apply_when_loading="true" zero_first="false">
+      <overlay chemical="a">
+        <overwrite/>
+        <constant value="0"/>
+        <everywhere/>
+      </overlay>
+      <overlay chemical="a">
+        <overwrite/>
+        <constant value="1"/>
+        <circle radius="0.01">
+          <point3d x="0.5" y="0.5" z="0.5" />
+        </circle>
+      </overlay>
+      <overlay chemical="b">
+        <overwrite/>
+        <constant value="0"/>
+        <everywhere/>
+      </overlay>
+    </initial_pattern_generator>
+    <render_settings>
+      <surface_color r="1" g="1" b="1"/>
+      <color_low r="0" g="0" b="1"/>
+      <color_high r="1" g="0" b="0"/>
+      <show_color_scale value="true"/>
+      <show_multiple_chemicals value="false"/>
+      <active_chemical value="a"/>
+      <low value="0.2"/>
+      <high value="1"/>
+      <vertical_scale_1D value="30"/>
+      <vertical_scale_2D value="15"/>
+      <contour_level value="0.25"/>
+      <cap_contour value="true"/>
+      <invert_contour_cap value="false"/>
+      <use_wireframe value="false"/>
+      <show_cell_edges value="false"/>
+      <show_bounding_box value="true"/>
+      <show_chemical_label value="true"/>
+      <slice_3D value="true"/>
+      <slice_3D_axis value="z"/>
+      <slice_3D_position value="0.5"/>
+      <show_displacement_mapped_surface value="false"/>
+      <color_displacement_mapped_surface value="false"/>
+      <use_image_interpolation value="true"/>
+      <timesteps_per_render value="64"/>
+      <show_phase_plot value="false"/>
+      <phase_plot_x_axis value="a"/>
+      <phase_plot_y_axis value="b"/>
+      <phase_plot_z_axis value="c"/>
+    </render_settings>
+  </RD>
+  <ImageData WholeExtent="0 511 0 511 0 0" Origin="0 0 0" Spacing="1 1 1">
+  <Piece Extent="0 511 0 511 0 0">
+    <PointData>
+      <DataArray type="Float32" Name="a" format="binary" RangeMin="0" RangeMax="0">
+        IAAAAACAAAAAAAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA=eJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAE=
+      </DataArray>
+      <DataArray type="Float32" Name="b" format="binary" RangeMin="0" RangeMax="0">
+        IAAAAACAAAAAAAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA=eJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAE=
+      </DataArray>
+    </PointData>
+    <CellData>
+    </CellData>
+  </Piece>
+  </ImageData>
+</VTKFile>

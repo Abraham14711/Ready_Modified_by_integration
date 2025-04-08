@@ -1,0 +1,91 @@
+<html>
+<title>Ready Help: Quick Start</title>
+<body>
+
+<p>
+<h3>Quick Start</h3>
+
+<p>Ready is a program for exploring <a href="http://en.wikipedia.org/wiki/Reaction-diffusion_system">reaction-diffusion</a> systems.</p>
+
+<p>Click on the files in the Patterns Pane to see some different systems. Use the command Run from the Action menu (or the arrow on the toolbar) to set them running.
+
+<p>
+<font size=+1><b>Install OpenCL</b></font>
+<p>
+<a href="http://en.wikipedia.org/wiki/OpenCL">OpenCL</a> is a way to harness graphics cards and multi-core CPUs for high-performance computing. Most of the demos in Ready require OpenCL. Use the command "Show OpenCL Diagnostics" on the View menu to see whether OpenCL is installed on your machine. If one or more devices are listed then everything should work. If not then you'll need to install the latest drivers for your graphics card, or install one of the SDKs from
+<a href="http://developer.amd.com/appsdk">AMD</a> or
+<a href="http://software.intel.com/en-us/articles/vcsource-tools-opencl-sdk/">Intel</a>
+that will work with your CPU. Ensure you are using the fastest available device by using the command "Select OpenCL Device" on the Action menu.
+<p>
+If you can't get OpenCL working (if you're working in a virtual machine, for example) then these options are available to you:
+<ul>
+<li>The demos in the "CPU-only" folder will work. These use the inbuilt Gray-Scott implementation.
+<li>Use File > New Pattern to make new patterns. They will use the inbuilt Gray-Scott implementation.
+<li>Use File > Import Mesh to run Gray-Scott on the surface of imported meshes.
+</ul>
+
+<p>
+<font size=+1><b>Interacting with the rendered scene</b></font>
+
+<p>From the Action menu: Start or Stop the system running, or take small Steps.
+
+<p>From the View menu: Fit Pattern makes everything visible.<br>
+Wireframe toggles between a wireframe view or a surface view.
+
+<p>
+In the rendering pane:
+<p>
+<b>left mouse:</b> rotates the camera around the focal point, as if the scene is a trackball<br>
+<b>right mouse, or shift+ctrl+left mouse:</b> move up and down to zoom in and out<br>
+<b>scroll wheel:</b> zoom in and out<br>
+<b>shift+left mouse:</b> pan<br>
+<b>ctrl+left mouse:</b> roll (use command+left mouse on Mac)<br>
+<p>
+While painting:
+<p>
+<b>left mouse:</b> paint, brush or pick, depending on the current tool<br>
+<b>right mouse, or shift+left mouse:</b> switch temporarily to color picker tool<br>
+<b>scroll wheel:</b> zoom in and out<br>
+
+<p>Use the <a href="prefs:keyboard">Preferences</a> dialog to create keyboard shortcuts
+for menu items (or other actions, such as opening a particular pattern file).
+
+<p>
+<font size=+1><b>Working with the windows<b/></font>
+
+<p>The Patterns Pane, Info Pane and Help Pane can be shown or hidden
+by using the commands in the View menu.
+You can drag the panes by their title bar to dock them into the
+Ready frame in different positions or float them as separate windows.
+
+<p>
+<font size=+1><b>Improving the speed</b></font>
+
+<p>
+Change the 'Timesteps per render' setting on the toolbar by using the buttons on either side of it to Run Faster (render
+less often) or Run Slower (render more often). These commands are also on the Action menu.
+
+<p>
+To improve the overall speed here are some things to check:
+<ul>
+<li>Select the fastest OpenCL device - use Action > Select OpenCL Device...
+<li>Avoid using the same graphics card for rendering, if possible. For example on my laptop I can tell Windows that Ready
+should use the integrated graphics chip for rendering (Graphics Settings), which leaves the NVidia card free to run OpenCL.
+<li>Change the accuracy to low in the Info Pane, if this does not introduce artifacts into the pattern. View the kernel
+to see the effect of this setting.
+<li>Set the data type to float if possible. Using double is typically slower.
+<li>Try using local memory, with the setting in the Info Pane. This is a recent feature, let us know if it makes a
+dramatic difference.
+<li>Try changing the block size. On most devices the default 4x1x1 block size is fastest.
+</ul>
+
+<p>
+<font size=+1><b>More help</b></font>
+
+<p>Visit our page at <a href="https://github.com/GollyGang/ready">https://github.com/GollyGang/ready</a> for more information and to report issues.</p>
+
+<p>Send an email to <a href="mailto:reaction-diffusion@googlegroups.com">reaction-diffusion@googlegroups.com</a>
+if you have any problems, or want to get involved.
+
+</body>
+</html>

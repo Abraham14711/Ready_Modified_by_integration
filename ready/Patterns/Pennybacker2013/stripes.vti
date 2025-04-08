@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<VTKFile type="ImageData" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <RD format_version="6">
+
+    <description>
+      This is a model of auxin transport, see &lt;a href=&quot;http://www.pennybacker.net&quot;&gt;http://www.pennybacker.net&lt;/a&gt;
+
+      In this simplified version the gradient term is not present but the core pattern-formation mechanism remains.
+    </description>
+
+    <rule name="phyllotaxis" type="formula" wrap="1">
+      <param name="timestep"> 0.002  </param>
+      <param name="dx">       0.4    </param>
+      <param name="mu">       0.5    </param>
+      <param name="beta">     0.0    </param>
+      <formula number_of_chemicals="1">
+        delta_a = mu * a - bilaplacian_a - 2.0f*laplacian_a - a + beta*a*a - a*a*a;
+      </formula>
+    </rule>
+    <initial_pattern_generator apply_when_loading="true">
+
+      <overlay chemical="a"> <add /> <white_noise low="-0.1" high="0.1" /> <everywhere /> </overlay>
+      <overlay chemical="a"> <add /> <gaussian height="3" sigma="0.01"> <point3d x="0.5" y="0.5" z="0.5" /> </gaussian> <everywhere /> </overlay>
+
+    </initial_pattern_generator>
+
+    <render_settings>
+      <low value="-0.5" />
+      <high value="2.5" />
+      <timesteps_per_render value="2048" />
+      <show_displacement_mapped_surface value="false" />
+    </render_settings>
+
+  </RD>
+  <ImageData WholeExtent="0 255 0 255 0 0" Origin="0 0 0" Spacing="1 1 1">
+  <Piece Extent="0 255 0 255 0 0">
+    <PointData>
+      <DataArray type="Float32" Name="a" format="binary" RangeMin="0" RangeMax="0">
+        CAAAAACAAAAAAAAANAAAADQAAAA0AAAANAAAADQAAAA0AAAANAAAADQAAAA=eJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAE=
+      </DataArray>
+    </PointData>
+    <CellData>
+    </CellData>
+  </Piece>
+  </ImageData>
+</VTKFile>
+

@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/Ready.dir/src/gui/HelpPanel.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/HelpPanel.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/HtmlInfo.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/HtmlInfo.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/ImportImageDialog.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/ImportImageDialog.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/InfoPanel.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/InfoPanel.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/InteractorStylePainter.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/InteractorStylePainter.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/MakeNewSystem.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/MakeNewSystem.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/PatternsPanel.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/PatternsPanel.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/RecordingDialog.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/RecordingDialog.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/app.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/app.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/dialogs.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/dialogs.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/frame.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/frame.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/prefs.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/prefs.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/vtk_pipeline.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/vtk_pipeline.cpp.o.d"
+  "CMakeFiles/Ready.dir/src/gui/wxVTKRenderWindowInteractor.cxx.o"
+  "CMakeFiles/Ready.dir/src/gui/wxVTKRenderWindowInteractor.cxx.o.d"
+  "CMakeFiles/Ready.dir/src/gui/wxutils.cpp.o"
+  "CMakeFiles/Ready.dir/src/gui/wxutils.cpp.o.d"
+  "Ready.app/Contents/MacOS/Ready"
+  "Ready.app/Contents/Resources/app.icns"
+  "Ready.app/Contents/Resources/file.icns"
+  "Ready.pdb"
+  "resources/Info.plist.in"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/Ready.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

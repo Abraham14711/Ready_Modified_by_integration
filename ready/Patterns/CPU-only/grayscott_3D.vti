@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<VTKFile type="ImageData" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <RD format_version="1">
+
+    <description>
+        The Gray-Scott rule in three dimensions.
+
+        P. Gray, S.K. Scott (1984) &lt;a href=&quot;https://www.sciencedirect.com/science/article/pii/0009250984870177&quot;&gt;Autocatalytic reactions in the isothermal, continuous stirred tank reactor: Oscillations and instabilities in the system A + 2B → 3B; B → C&lt;/a&gt; Chemical Engineering Science, Volume 39, Issue 6.
+
+        The formula is:
+
+        delta_a = D_a * laplacian_a - a*b*b + F*(1-a)&lt;br&gt;
+        delta_b = D_b * laplacian_b + a*b*b - (F+K)*b
+
+        Change the parameters below to see how they affect the pattern. You'll find self-replicating spots at (k = 0.069, F = 0.031) and 3D waves at (k = 0.05, F = 0.02). Hit the 'Generate Initial Pattern' button (or Action > Generate Initial Pattern) to restart the pattern if needed.
+
+        You can change the dimensions below. To run in 2D, try 64 x 64 x 1, or click on &lt;a href=&quot;open:Patterns/CPU-only/grayscott_2D.vti&quot;&gt;CPU-only/grayscott_2D.vti&lt;/a&gt;. To run in 1D, try 128 x 1 x 1 and (k = 0.06, F = 0.035) or click on &lt;a href=&quot;open:Patterns/CPU-only/grayscott_1D.vti&quot;&gt;CPU-only/grayscott_1D.vti&lt;/a&gt;
+
+        This example uses a hard-coded implementation and so the formula cannot be edited. In other patterns you can edit the formula as well. See the GrayScott1984 folder for more patterns with this formula.
+    </description>
+
+    <rule type="inbuilt" name="Gray-Scott" wrap="0">
+      <param name="timestep">1.0</param>
+      <param name="D_a">
+        0.082
+      </param>
+      <param name="D_b">
+        0.041
+      </param>
+      <param name="k">
+        0.064
+      </param>
+      <param name="F">
+        0.035
+      </param>
+    </rule>
+
+    <initial_pattern_generator apply_when_loading="true">
+        <overlay chemical="a">
+            <overwrite />
+            <constant value="1" />
+            <everywhere />
+        </overlay>
+        <overlay chemical="b">
+            <overwrite />
+            <constant value="0" />
+            <everywhere />
+        </overlay>
+        <overlay chemical="b">
+            <overwrite />
+            <white_noise low="0" high="1" />
+            <rectangle>
+                <point3D x="0.2" y="0.2" z="0.3" />
+                <point3D x="0.6" y="0.5" z="0.5" />
+            </rectangle>
+        </overlay>
+        <overlay chemical="a">
+            <subtract />
+            <other_chemical chemical="b" />
+            <everywhere />
+        </overlay>
+    </initial_pattern_generator>
+
+    <render_settings>
+        <active_chemical value="b" />
+        <show_multiple_chemicals value="false" />
+        <slice_3D_position value="0.1" />
+    </render_settings>
+
+  </RD>
+
+  <ImageData WholeExtent="0 29 0 24 0 19" Origin="0 0 0" Spacing="1 1 1">
+    <Piece Extent="0 29 0 24 0 19">
+      <PointData Scalars="Scalars_">
+        <DataArray type="Float32" Name="Scalars_" NumberOfComponents="2" format="appended" RangeMin="0" RangeMax="0" offset="0" />
+      </PointData>
+      <CellData>
+      </CellData>
+    </Piece>
+  </ImageData>
+  <AppendedData encoding="base64">
+   _BAAAAACAAADAVAAANAAAADQAAAA0AAAALAAAAA==eJztwQEBAAAAgJD+r+4ICgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYgAAAAXic7cEBAQAAAICQ/q/uCAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGIAAAAF4nO3BAQEAAACAkP6v7ggKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABiAAAABeJztwYEAAAAAw6D5U1/gCFUBAAAAAAAAAAAAAAAAAAAAAAAAAAB8A1TAAAE=
+  </AppendedData>
+</VTKFile>
