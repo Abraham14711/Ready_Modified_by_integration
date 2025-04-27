@@ -379,7 +379,7 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
         // }
 
         for(int ic=0;ic<NC;ic++){
-            ret = clSetKernelArg(this->kernel, NC, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
+            ret = clSetKernelArg(this->kernel, ic, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
             throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
         }
 
@@ -403,9 +403,30 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
             0, NULL, NULL);
         if (ret != CL_SUCCESS)
         {
+            ostringstream oss;
             oss << "OpenCLImageRD::InternalUpdate : clEnqueueNDRangeKernel failed.\n";
             oss << "Local work size: " << this->local_work_size[0] << " x " << this->local_work_size[1] << " x " << this->local_work_size[2] << "\n";
-            oss <<"Kernel expects arguments" << num_args;
+            oss <<"Kernel expects arguments" << num_args<<" "<<NC<<"\n";
+            //-------------------------------------------
+            for (cl_uint i = 0; i < num_args; i++) {
+                size_t size;
+                char* value;
+
+                // Тип аргумента
+                clGetKernelArgInfo(kernel, i, CL_KERNEL_ARG_TYPE_NAME, 0, NULL, &size);
+                value = (char*)malloc(size);
+                clGetKernelArgInfo(kernel, i, CL_KERNEL_ARG_TYPE_NAME, size, value, NULL);
+                oss<< "Arg:" << i <<" type: "<< value<<"\n";
+                free(value);
+
+                // Имя аргумента
+                clGetKernelArgInfo(kernel, i, CL_KERNEL_ARG_NAME, 0, NULL, &size);
+                value = (char*)malloc(size);
+                clGetKernelArgInfo(kernel, i, CL_KERNEL_ARG_NAME, size, value, NULL);
+                oss<< "Arg:" << i <<" type: "<< value<<"\n";
+                free(value);
+            }
+            //-------------------------------------------
             throwOnError(ret, oss.str().c_str());
         }
         this->iCurrentBuffer = 1 - this->iCurrentBuffer;
