@@ -284,7 +284,7 @@ void OpenCLImageRD::WriteToOpenCLBuffersIfNeeded()
         throwOnError(ret,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
 
         void * temp = data_integrals[ic]->GetScalarPointer();
-        cl_int ret1 = clEnqueueWriteBuffer(this->command_queue,this->intergral_buffers[0][ic], CL_TRUE, 0, MEM_SIZE, data, 0, NULL, NULL);
+        cl_int ret1 = clEnqueueWriteBuffer(this->command_queue,this->intergral_buffers[0][ic], CL_TRUE, 0, MEM_SIZE, temp, 0, NULL, NULL);
         throwOnError(ret1,"OpenCLImageRD::WriteToOpenCLBuffers : buffer writing failed: ");
 
     }
@@ -360,8 +360,10 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
     this->ReloadKernelIfNeeded();
     this->WriteToOpenCLBuffersIfNeeded();
 
+
     cl_int ret;
     int iBuffer;
+
     const int NC = this->GetNumberOfChemicals();
 
     for(int it=0;it<n_steps;it++)
@@ -392,14 +394,18 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
                 throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
             }
         }
+        cl_uint num_args;
+        clGetKernelInfo(kernel, CL_KERNEL_NUM_ARGS, sizeof(num_args), &num_args, NULL);
+        
+        
         ret = clEnqueueNDRangeKernel(this->command_queue, this->kernel, 3, // dimensions
             NULL, this->global_range, this->use_local_memory ? this->local_work_size : NULL,
             0, NULL, NULL);
         if (ret != CL_SUCCESS)
         {
-            ostringstream oss;
             oss << "OpenCLImageRD::InternalUpdate : clEnqueueNDRangeKernel failed.\n";
             oss << "Local work size: " << this->local_work_size[0] << " x " << this->local_work_size[1] << " x " << this->local_work_size[2] << "\n";
+            oss <<"Kernel expects arguments" << num_args;
             throwOnError(ret, oss.str().c_str());
         }
         this->iCurrentBuffer = 1 - this->iCurrentBuffer;
