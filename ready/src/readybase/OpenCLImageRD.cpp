@@ -227,10 +227,22 @@ std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const 
                 for(int iz = 0; iz < Z; iz++) {
                     float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
                     iSum += val; 
+                    std::cout<<val<<std::endl;
                 }
             }
         }
-        copied_images[ic]->SetScalarComponentFromFloat(X,Y,Z,1,iSum);
+        for ( int ix =0; ix < X; ix++){
+            for ( int iy =0; iy < Y; iy++){
+                for ( int iz =0; iz < Z; iz++){
+                    copied_images[ic]->SetScalarComponentFromFloat(ix,iy,iz,0,iSum);
+                }
+            }
+        }
+    float eps = 1e-5;
+    // copied_images[ic]->SetScalarComponentFromFloat(X,Y,Z,0,iSum);
+    // if (iSum>eps){
+    //     throwOnError(1,"iSum is greater than eps");
+    // }
     }
     return copied_images;
     // for (const auto& image : images) {
@@ -365,23 +377,17 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
     int iBuffer;
 
     const int NC = this->GetNumberOfChemicals();
-
+    
     for(int it=0;it<n_steps;it++)
     {
-        // govno
-        // this->GetIntegrals();
-
-        // for(int ic=0; ic < NC;ic++)
-        // {
-        //     ret = clSetKernelArg(this->kernel, ic, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
-        //     throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
-
-        // }
-
+        string temp_buffer_values = "";
         for(int ic=0;ic<NC;ic++){
+            // temp_buffer_values += std::to_string(*reinterpret_cast<uint64_t*>(intergral_buffers[0][ic])) + " ";
+
             ret = clSetKernelArg(this->kernel, ic, sizeof(cl_mem), (void *)&this->intergral_buffers[0][ic]);
             throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
         }
+        // throwOnError(1,temp_buffer_values.c_str());
 
 
         for(int io=0;io<2;io++) // first input buffers (io=0) then output buffers (io=1)
@@ -390,7 +396,7 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
             for(int ic=0;ic<NC;ic++)
             {
                 // a_in, b_in, ... a_out, b_out ...
-                ret = clSetKernelArg(this->kernel, io*(NC + 1) + ic, sizeof(cl_mem), (void *)&this->buffers[iBuffer][ic]);
+                ret = clSetKernelArg(this->kernel, NC*( io + 1 ) + ic, sizeof(cl_mem), (void *)&this->buffers[iBuffer][ic]);
                 throwOnError(ret,"OpenCLImageRD::InternalUpdate : clSetKernelArg failed: ");
             }
         }
@@ -406,6 +412,10 @@ void OpenCLImageRD::InternalUpdate(int n_steps)
             ostringstream oss;
             oss << "OpenCLImageRD::InternalUpdate : clEnqueueNDRangeKernel failed.\n";
             oss << "Local work size: " << this->local_work_size[0] << " x " << this->local_work_size[1] << " x " << this->local_work_size[2] << "\n";
+//--------
+            oss<<"Global range: ["<< global_range[0]<<" "<< global_range[1]<<" "<< global_range[2]<<"]\n";
+            oss<<"Local work size: ["<< local_work_size[0]<<" "<< local_work_size[1]<<" "<< local_work_size[2]<<"]\n";
+//--------
             oss <<"Kernel expects arguments" << num_args<<" "<<NC<<"\n";
             //-------------------------------------------
             for (cl_uint i = 0; i < num_args; i++) {

@@ -1,21 +1,19 @@
-kernel void rd_compute(global float *a_in,global float *b_in,global float *c_in,global float *d_in,global float *e_in,global float *a_out,global float *b_out,global float *c_out,global float *d_out,global float *e_out)
+kernel void rd_compute(global float *integral_a,global float *integral_b,global float *integral_c,global float *integral_d,global float *a_in,global float *b_in,global float *c_in,global float *d_in,global float *a_out,global float *b_out,global float *c_out,global float *d_out)
 {
     // parameters:
-    const float aa = 0.06700000f;
-    const float ba = -0.08000000f;
+    const float aa = 0.09000000f;
+    const float ba = -0.12000000f;
     const float ca = 0.00000000f;
     const float da = 0.03000000f;
     const float diff_a = 0.02000000f;
-    const float ab = 0.09000000f;
-    const float bb = -0.07000000f;
-    const float cb = 0.00000000f;
+    const float ab = 0.15000001f;
+    const float bb = 0.00000000f;
+    const float cb = -0.15000001f;
     const float db = 0.08000000f;
-    const float diff_b = 0.44999999f;
+    const float diff_b = 0.50000000f;
     const float timestep = 0.10000000f;
     const float Fmax = 0.20000000f;
     const float Gmax = 0.50000000f;
-    const float nsu = 1.00000000f;
-    const float nsv = 1.00000000f;
     const float dx = 1.0f; // grid spacing
 
     // indices:
@@ -30,82 +28,105 @@ kernel void rd_compute(global float *a_in,global float *b_in,global float *c_in,
     float b = b_in[index_here];
     float c = c_in[index_here];
     float d = d_in[index_here];
-    float e = e_in[index_here];
 
     // cells needed:
     const float a_dsw = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
     const float b_dsw = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
+    const float d_dsw = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
     const float a_sw = a_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
     const float b_sw = b_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
+    const float d_sw = d_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
     const float a_usw = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
     const float b_usw = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
+    const float d_usw = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x-1))];
     const float a_dw = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + min(X-1, max(0, index_x-1))];
     const float b_dw = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + min(X-1, max(0, index_x-1))];
+    const float d_dw = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + min(X-1, max(0, index_x-1))];
     const float a_w = a_in[X* (Y * index_z + index_y) + min(X-1, max(0, index_x-1))];
     const float b_w = b_in[X* (Y * index_z + index_y) + min(X-1, max(0, index_x-1))];
+    const float d_w = d_in[X* (Y * index_z + index_y) + min(X-1, max(0, index_x-1))];
     const float a_uw = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + min(X-1, max(0, index_x-1))];
     const float b_uw = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + min(X-1, max(0, index_x-1))];
+    const float d_uw = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + min(X-1, max(0, index_x-1))];
     const float a_dnw = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
     const float b_dnw = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
+    const float d_dnw = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
     const float a_nw = a_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
     const float b_nw = b_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
+    const float d_nw = d_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
     const float a_unw = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
     const float b_unw = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
+    const float d_unw = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x-1))];
     const float a_ds = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + index_x];
     const float b_ds = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + index_x];
+    const float d_ds = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + index_x];
     const float a_s = a_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + index_x];
     const float b_s = b_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + index_x];
+    const float d_s = d_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + index_x];
     const float a_us = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + index_x];
     const float b_us = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + index_x];
+    const float d_us = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + index_x];
     const float a_d = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + index_x];
     const float b_d = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + index_x];
+    const float d_d = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + index_x];
     const float a_u = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + index_x];
     const float b_u = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + index_x];
+    const float d_u = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + index_x];
     const float a_dn = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + index_x];
     const float b_dn = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + index_x];
+    const float d_dn = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + index_x];
     const float a_n = a_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + index_x];
     const float b_n = b_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + index_x];
+    const float d_n = d_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + index_x];
     const float a_un = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + index_x];
     const float b_un = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + index_x];
+    const float d_un = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + index_x];
     const float a_dse = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
     const float b_dse = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
+    const float d_dse = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
     const float a_se = a_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
     const float b_se = b_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
+    const float d_se = d_in[X* (Y * index_z + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
     const float a_use = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
     const float b_use = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
+    const float d_use = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y-1))) + min(X-1, max(0, index_x+1))];
     const float a_de = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + min(X-1, max(0, index_x+1))];
     const float b_de = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + min(X-1, max(0, index_x+1))];
+    const float d_de = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + index_y) + min(X-1, max(0, index_x+1))];
     const float a_e = a_in[X* (Y * index_z + index_y) + min(X-1, max(0, index_x+1))];
     const float b_e = b_in[X* (Y * index_z + index_y) + min(X-1, max(0, index_x+1))];
+    const float d_e = d_in[X* (Y * index_z + index_y) + min(X-1, max(0, index_x+1))];
     const float a_ue = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + min(X-1, max(0, index_x+1))];
     const float b_ue = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + min(X-1, max(0, index_x+1))];
+    const float d_ue = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + index_y) + min(X-1, max(0, index_x+1))];
     const float a_dne = a_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
     const float b_dne = b_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
+    const float d_dne = d_in[X* (Y * min(Z-1, max(0, index_z-1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
     const float a_ne = a_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
     const float b_ne = b_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
+    const float d_ne = d_in[X* (Y * index_z + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
     const float a_une = a_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
     const float b_une = b_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
+    const float d_une = d_in[X* (Y * min(Z-1, max(0, index_z+1)) + min(Y-1, max(0, index_y+1))) + min(X-1, max(0, index_x+1))];
 
     // keywords needed:
     const float laplacian_a = (-128 * a + a_dnw + a_dne + a_dsw + a_dse + a_unw + a_une + a_usw + a_use + 3 * (a_dn + a_dw + a_de + a_ds + a_nw + a_ne + a_sw + a_se + a_un + a_uw + a_ue + a_us) + 14 * (a_d + a_n + a_w + a_e + a_s + a_u)) / (30 * dx * dx);
     const float laplacian_b = (-128 * b + b_dnw + b_dne + b_dsw + b_dse + b_unw + b_une + b_usw + b_use + 3 * (b_dn + b_dw + b_de + b_ds + b_nw + b_ne + b_sw + b_se + b_un + b_uw + b_ue + b_us) + 14 * (b_d + b_n + b_w + b_e + b_s + b_u)) / (30 * dx * dx);
+    const float laplacian_d = (-128 * d + d_dnw + d_dne + d_dsw + d_dse + d_unw + d_une + d_usw + d_use + 3 * (d_dn + d_dw + d_de + d_ds + d_nw + d_ne + d_sw + d_se + d_un + d_uw + d_ue + d_us) + 14 * (d_d + d_n + d_w + d_e + d_s + d_u)) / (30 * dx * dx);
     float delta_a = 0.0f;
     float delta_b = 0.0f;
     float delta_c = 0.0f;
     float delta_d = 0.0f;
-    float delta_e = 0.0f;
 
     // the formula:
-    delta_a = (aa/integral_a)*a+ba*b+ca
-        - da*a + diff_a*laplacian_a + d*nsu;
-    delta_b = ab*a+bb*b+cb
-        - db*b + diff_b*laplacian_b + d*nsv;
-    c = a+b;
+    delta_a = max(0,min((aa*a)+(*integral_a)+ba*b+ca,Fmax))-da*a+diff_a*laplacian_a+d;
+    delta_b = max(0,min((ab*a)+(*integral_a)+bb*b+cb,Gmax))-db*b+diff_b*laplacian_b;
+    c =a+b;
+    d = fmod(d+laplacian_d,0.5);
 
     // forward-Euler update step:
     a_out[index_here] = a + timestep * delta_a;
     b_out[index_here] = b + timestep * delta_b;
     c_out[index_here] = c + timestep * delta_c;
     d_out[index_here] = d + timestep * delta_d;
-    e_out[index_here] = e + timestep * delta_e;
 }
