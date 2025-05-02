@@ -31,6 +31,13 @@ using namespace OpenCL_utils;
 #include <vector>
 #include <vtkSmartPointer.h>
 
+//=====================
+//for testing integration values in temporary file
+#include <iostream>
+#include <fstream>
+//=====================
+
+
 
 // VTK:
 #include <vtkImageData.h>
@@ -203,12 +210,16 @@ void OpenCLImageRD::CreateOpenCLBuffers()
 // ----------------------------------------------------------------------------------------------------------------
 
 std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const std::vector<vtkSmartPointer<vtkImageData>>& images) {
+    
     double totalSum = 0.0;
     int X = this->GetX();
     int Y = this->GetY();
     int Z = this->GetZ();
     const int NC = this->GetNumberOfChemicals();
     
+    //===================
+    std::ofstream file("/Users/abraham_barrett/Desktop/sum.txt");
+    //===================
     std::vector<vtkSmartPointer<vtkImageData>> copied_images(NC, nullptr);
     for (int ic=0; ic < NC; ic++) {
         copied_images[ic] = vtkSmartPointer<vtkImageData>::New();
@@ -227,10 +238,15 @@ std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const 
                 for(int iz = 0; iz < Z; iz++) {
                     float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
                     iSum += val; 
+                    file <<"chemical: "<<ic <<" X: "<< ix << " Y: "<< iy << " Z: "<< iz << " val: "<<val << std::endl;
                     std::cout<<val<<std::endl;
                 }
             }
         }
+        
+     
+        file<<"Sum: "<< iSum << std::endl;
+        
         for ( int ix =0; ix < X; ix++){
             for ( int iy =0; iy < Y; iy++){
                 for ( int iz =0; iz < Z; iz++){
@@ -239,11 +255,8 @@ std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const 
             }
         }
     float eps = 1e-5;
-    // copied_images[ic]->SetScalarComponentFromFloat(X,Y,Z,0,iSum);
-    // if (iSum>eps){
-    //     throwOnError(1,"iSum is greater than eps");
-    // }
     }
+    file.close();
     return copied_images;
     // for (const auto& image : images) {
     //     if (!image) continue; // Пропускаем nullptr
