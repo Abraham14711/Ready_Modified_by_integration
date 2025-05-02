@@ -218,7 +218,7 @@ std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const 
     const int NC = this->GetNumberOfChemicals();
     
     //===================
-    std::ofstream file("/Users/abraham_barrett/Desktop/sum.txt");
+    // std::ofstream file("/Users/abraham_barrett/Desktop/sum.txt");
     //===================
     std::vector<vtkSmartPointer<vtkImageData>> copied_images(NC, nullptr);
     for (int ic=0; ic < NC; ic++) {
@@ -238,14 +238,14 @@ std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const 
                 for(int iz = 0; iz < Z; iz++) {
                     float val = this->GetImage(ic)->GetScalarComponentAsFloat(ix,iy,iz,0);
                     iSum += val; 
-                    file <<"chemical: "<<ic <<" X: "<< ix << " Y: "<< iy << " Z: "<< iz << " val: "<<val << std::endl;
+                    //file <<"chemical: "<<ic <<" X: "<< ix << " Y: "<< iy << " Z: "<< iz << " val: "<<val << std::endl;
                     std::cout<<val<<std::endl;
                 }
             }
         }
         
      
-        file<<"Sum: "<< iSum << std::endl;
+        //file<<"Sum: "<< iSum << std::endl;
         
         for ( int ix =0; ix < X; ix++){
             for ( int iy =0; iy < Y; iy++){
@@ -256,7 +256,7 @@ std::vector<vtkSmartPointer<vtkImageData>> OpenCLImageRD::SumImageScalars(const 
         }
     float eps = 1e-5;
     }
-    file.close();
+    //file.close();
     return copied_images;
     // for (const auto& image : images) {
     //     if (!image) continue; // Пропускаем nullptr
